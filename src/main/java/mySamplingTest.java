@@ -26,11 +26,6 @@ public class mySamplingTest {
 
     //private int capacity = 10;
 
-    double minLongitude = Double.POSITIVE_INFINITY;
-    double maxLongitude = Double.NEGATIVE_INFINITY;
-    double minLatitude = Double.POSITIVE_INFINITY;
-    double maxLatitude = Double.NEGATIVE_INFINITY;
-
     public static void sampleSpark(JavaSparkContext sc, int memoryBudget, String fileName, int type, double selectivity)
             throws IOException {
 
