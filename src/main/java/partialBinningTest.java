@@ -1,11 +1,12 @@
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 
 public class partialBinningTest {
 
@@ -26,15 +27,47 @@ public class partialBinningTest {
 
         long count = inputFile.count();
         System.out.println("--> total points on file = " + count);
-
+        /*
         JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
             public myPoint2 call(String s) {
+                //myPoint2 result = s.trim().toUpperCase();
+        
+                //final String tokenSplit = "\t";
+                final String tokenSplit = ",";
+                String[] parts = s.split(tokenSplit);
+                myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+        
+                return pt;
+            }
+        });
+        
+        int xx = pointData.getNumPartitions();
+        System.out.println("->> Num of partitions : " + xx);
+        */
+
+        class mbr implements Serializable {
+            double maxX;
+            double minX;
+            double maxY;
+            double minY;
+
+            public mbr(double maxX, double minX, double maxY, double minY) {
+                this.maxX = maxX;
+                this.minX = minX;
+                this.maxY = maxY;
+                this.minY = minY;
+            }
+        }
+
+        JavaRDD<mbr> pointData = inputFile.map(new Function<String, mbr>() {
+            public mbr call(String s) {
                 //myPoint2 result = s.trim().toUpperCase();
 
                 //final String tokenSplit = "\t";
                 final String tokenSplit = ",";
                 String[] parts = s.split(tokenSplit);
-                myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+                mbr pt = new mbr(Double.parseDouble(parts[1]), Double.POSITIVE_INFINITY, Double.parseDouble(parts[2]),
+                        Double.POSITIVE_INFINITY);
 
                 return pt;
             }
@@ -43,28 +76,36 @@ public class partialBinningTest {
         int xx = pointData.getNumPartitions();
         System.out.println("->> Num of partitions : " + xx);
 
-        Comparator<myPoint2> compX = new myComparatorX();
-        myPoint2 maxX = pointData.max(compX);
-        //System.out.println("--> max X = " + maxX.longitude);
-        myPoint2 minX = pointData.min(compX);
-        //System.out.println("--> min X = " + minX.longitude);
-        Comparator<myPoint2> compY = new myComparatorY();
-        myPoint2 maxY = pointData.max(compY);
-        //System.out.println("--> max Y = " + maxY.latitude);
-        myPoint2 minY = pointData.min(compY);
-        //System.out.println("--> min Y = " + minY.latitude);
+        mbr myMbr = pointData.reduce(new Function2<mbr, mbr, mbr>() {
+            public mbr call(mbr a, mbr b) {
+                if (a.maxX < b.maxX) {
+                    a.maxX = b.maxX;
+                }
+                if (a.minX > b.maxX) {
+                    a.minX = b.maxX;
+                }
+                if (a.maxY < b.maxY) {
+                    a.maxY = b.maxY;
+                }
+                if (a.minY > b.maxY) {
+                    a.minY = b.maxY;
+                }
+
+                return a;
+            }
+        });
 
         System.out.println("selectivity = " + selectivity);
 
-        double totalx = maxX.longitude - minX.longitude; // find the total area size, edge of square, etc
-        double totaly = maxY.latitude - minX.latitude;
+        double totalx = myMbr.maxX - myMbr.minX; // find the total area size, edge of square, etc
+        double totaly = myMbr.maxY - myMbr.minY;
         double totalArea = totalx * totaly;
         double edge = Math.sqrt(selectivity * totalArea);
 
-        System.out.println("minLongitude = " + minX.longitude);
-        System.out.println("maxLongitude = " + maxX.longitude);
-        System.out.println("minLatitude = " + minY.latitude);
-        System.out.println("maxLatitude = " + maxY.latitude);
+        System.out.println("minLongitude = " + myMbr.minX);
+        System.out.println("maxLongitude = " + myMbr.maxX);
+        System.out.println("minLatitude = " + myMbr.maxY);
+        System.out.println("maxLatitude = " + myMbr.maxY);
         System.out.println("totalx = " + totalx);
         System.out.println("totaly = " + totaly);
         System.out.println("totalArea = " + totalArea);
@@ -91,14 +132,14 @@ public class partialBinningTest {
         double[] xborders = new double[printezis + 1];
         double tempX;
         //xborders.add(minX.longitude); // create the xborders
-        xborders[0] = minX.longitude;
+        xborders[0] = myMbr.minX;
         for (int i = 1; i < printezis; i++) {
-            tempX = i * xSplit + minX.longitude;
+            tempX = i * xSplit + myMbr.minX;
             //xborders.add(tempX);
             xborders[i] = tempX;
         }
         //xborders.add(maxX.longitude);
-        xborders[xborders.length - 1] = maxX.longitude;
+        xborders[xborders.length - 1] = myMbr.maxX;
 
         for (int i = 0; i < printezis; i++) {
 

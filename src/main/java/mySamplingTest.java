@@ -53,18 +53,6 @@ public class mySamplingTest {
             double maxY;
             double minY;
 
-            public void forMaxX(mbr x, myPoint2 p) {
-                if (x.maxX < p.longitude) {
-                    x.maxX = p.longitude;
-                }
-            }
-
-            public void forMinX(mbr x, myPoint2 p) {
-                if (x.minX > p.longitude) {
-                    x.minX = p.longitude;
-                }
-            }
-
             public mbr(double maxX, double minX, double maxY, double minY) {
                 this.maxX = maxX;
                 this.minX = minX;
@@ -72,11 +60,6 @@ public class mySamplingTest {
                 this.minY = minY;
             }
         }
-
-        mbr myMbr = new mbr(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
-                Double.POSITIVE_INFINITY);
-
-        //Function2<myPoint2, mbr, mbr> reduceSumFunc = ();
 
         JavaRDD<mbr> pointData = inputFile.map(new Function<String, mbr>() {
             public mbr call(String s) {
@@ -92,7 +75,7 @@ public class mySamplingTest {
             }
         });
 
-        mbr maxX = pointData.reduce(new Function2<mbr, mbr, mbr>() {
+        mbr myMbr = pointData.reduce(new Function2<mbr, mbr, mbr>() {
             public mbr call(mbr a, mbr b) {
                 if (a.maxX < b.maxX) {
                     a.maxX = b.maxX;
@@ -111,10 +94,10 @@ public class mySamplingTest {
             }
         });
 
-        System.out.println("--> max X = " + maxX.maxX);
-        System.out.println("--> min X = " + maxX.minX);
-        System.out.println("--> max Y = " + maxX.maxY);
-        System.out.println("--> min Y = " + maxX.minY);
+        System.out.println("--> max X = " + myMbr.maxX);
+        System.out.println("--> min X = " + myMbr.minX);
+        System.out.println("--> max Y = " + myMbr.maxY);
+        System.out.println("--> min Y = " + myMbr.minY);
 
         /*
         Comparator<myPoint2> compX = new myComparatorX();
