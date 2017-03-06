@@ -38,20 +38,20 @@ public class test {
         int size2 = Long.SIZE / Byte.SIZE;
         System.out.println(size2);
 
-        /**/
+        /*
         // S A M P L I N G
-
+        
         //String filePath = new String("F:\\all_nodes");
         //int type = 0;
         //String filePath = new String("F:\\tweets-2014-06-14");
         int type = 1;
         mySamplingTest.sampleSpark(sc, memoryBudget, logFile, type, realSelectivity);
         //sampling(memoryBudget, logFile, type, realSelectivity, pointNum);
-        /**/
+        */
 
-        /*
+        /**/
         // B I N N I N G
-        
+
         //String filePath = new String("F:\\all_nodes") ;
         //int type = 0 ;
         //String filePath = new String("E:\\tweets-2014-06-14") ;
@@ -62,7 +62,7 @@ public class test {
         //bin.binning(memoryBudget, filePath, type);
         //bin.binning(memoryBudget, filePath, type, realSelectivity, pointNum);
         partialBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
-        */
+        /**/
 
         long endTime = System.nanoTime();
         long duration = (endTime - startTime); //divide by 1000000 to get milliseconds
