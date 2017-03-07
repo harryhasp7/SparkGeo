@@ -1,6 +1,7 @@
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -28,7 +29,7 @@ public class mySamplingTest {
     public static void sampleSpark(JavaSparkContext sc, int memoryBudget, String fileName, int type, double selectivity)
             throws IOException {
 
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
 
         JavaRDD<String> inputFile = sc.textFile(fileName); //Spark
 
@@ -61,33 +62,36 @@ public class mySamplingTest {
             }
         }
 
-        JavaRDD<mbr> pointData = inputFile.map(new Function<String, mbr>() {
+        JavaRDD<mbr> mbrData = inputFile.map(new Function<String, mbr>() {
             public mbr call(String s) {
                 //myPoint2 result = s.trim().toUpperCase();
 
                 //final String tokenSplit = "\t";
                 final String tokenSplit = ",";
                 String[] parts = s.split(tokenSplit);
-                mbr pt = new mbr(Double.parseDouble(parts[1]), Double.POSITIVE_INFINITY, Double.parseDouble(parts[2]),
-                        Double.POSITIVE_INFINITY);
+                mbr pt = new mbr(Double.parseDouble(parts[1]), Double.parseDouble(parts[1]),
+                        Double.parseDouble(parts[2]), Double.parseDouble(parts[2]));
+                if (pt.minY < -175.0) {
+                    System.out.println(pt.minY);
+                }
 
                 return pt;
             }
         });
 
-        mbr myMbr = pointData.reduce(new Function2<mbr, mbr, mbr>() {
+        mbr myMbr = mbrData.reduce(new Function2<mbr, mbr, mbr>() {
             public mbr call(mbr a, mbr b) {
                 if (a.maxX < b.maxX) {
                     a.maxX = b.maxX;
                 }
-                if (a.minX > b.maxX) {
-                    a.minX = b.maxX;
+                if (a.minX > b.minX) {
+                    a.minX = b.minX;
                 }
                 if (a.maxY < b.maxY) {
                     a.maxY = b.maxY;
                 }
-                if (a.minY > b.maxY) {
-                    a.minY = b.maxY;
+                if (a.minY > b.minY) {
+                    a.minY = b.minY;
                 }
 
                 return a;
@@ -110,22 +114,45 @@ public class mySamplingTest {
         System.out.println("--> max Y = " + maxY.latitude);
         myPoint2 minY = pointData.min(compY);
         System.out.println("--> min Y = " + minY.latitude);
-        
-        System.out.println("--> Turn to points");
-        
+        */
+
+        //System.out.println("--> Turn to points");
+
+        long startTime = System.nanoTime();
+
+        long count = inputFile.count(); //Spark
+        System.out.println("--> count = " + count);
+
         final int mega = 1000000;
         final int sampleSize = (memoryBudget * mega) / 16;
-        
+        double fraction = (double) sampleSize / count;
+        System.out.println("--> fraction = " + fraction);
+
+        JavaRDD<String> sampleString = inputFile.sample(false, fraction);
+
+        JavaRDD<myPoint2> pointData = sampleString.map(new Function<String, myPoint2>() {
+            //JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
+            public myPoint2 call(String s) {
+                //myPoint2 result = s.trim().toUpperCase();
+
+                //final String tokenSplit = "\t";
+                final String tokenSplit = ",";
+                String[] parts = s.split(tokenSplit);
+                myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+
+                return pt;
+            }
+        });
+
         //List<String> sample2 = inputFile.takeSample(false, (int) sampleSize); //Spark
-        
-        List<myPoint2> sample = pointData.takeSample(false, (int) sampleSize); //Spark
-        
+
+        List<myPoint2> sample = pointData.collect();
+        //List<myPoint2> sample = pointData.takeSample(false, (int) sampleSize); //Spark
+
         System.out.println("--> Took the sample = " + sample.size() + " - " + sampleSize);
-        
-        List<myPoint2> points = new ArrayList<myPoint2>(sample.size());
-        
+
         System.out.println("--> Create the list");
-        */
+        /**/
         long endTime = System.nanoTime();
         long duration = (endTime - startTime); //divide by 1000000 to get milliseconds
         System.out.println("-----> Data process time: " + duration / 1000000000);
