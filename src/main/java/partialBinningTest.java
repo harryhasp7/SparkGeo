@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,8 +28,8 @@ public class partialBinningTest {
 
         JavaRDD<String> inputFile = sc.textFile(fileName); //Spark
 
-        long count = inputFile.count();
-        System.out.println("--> total points on file = " + count);
+        //long count = inputFile.count();
+        //System.out.println("--> total points on file = " + count);
         /*
         JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
             public myPoint2 call(String s) {
@@ -61,36 +62,36 @@ public class partialBinningTest {
             }
         }
 
-        JavaRDD<mbr> pointData = inputFile.map(new Function<String, mbr>() {
+        JavaRDD<mbr> mbrData = inputFile.map(new Function<String, mbr>() {
             public mbr call(String s) {
                 //myPoint2 result = s.trim().toUpperCase();
 
                 //final String tokenSplit = "\t";
                 final String tokenSplit = ",";
                 String[] parts = s.split(tokenSplit);
-                mbr pt = new mbr(Double.parseDouble(parts[1]), Double.POSITIVE_INFINITY, Double.parseDouble(parts[2]),
-                        Double.POSITIVE_INFINITY);
+                mbr pt = new mbr(Double.parseDouble(parts[1]), Double.parseDouble(parts[1]),
+                        Double.parseDouble(parts[2]), Double.parseDouble(parts[2]));
+                if (pt.minY < -175.0) {
+                    System.out.println(pt.minY);
+                }
 
                 return pt;
             }
         });
 
-        int xx = pointData.getNumPartitions();
-        System.out.println("->> Num of partitions : " + xx);
-
-        mbr myMbr = pointData.reduce(new Function2<mbr, mbr, mbr>() {
+        mbr myMbr = mbrData.reduce(new Function2<mbr, mbr, mbr>() {
             public mbr call(mbr a, mbr b) {
                 if (a.maxX < b.maxX) {
                     a.maxX = b.maxX;
                 }
-                if (a.minX > b.maxX) {
-                    a.minX = b.maxX;
+                if (a.minX > b.minX) {
+                    a.minX = b.minX;
                 }
                 if (a.maxY < b.maxY) {
                     a.maxY = b.maxY;
                 }
-                if (a.minY > b.maxY) {
-                    a.minY = b.maxY;
+                if (a.minY > b.minY) {
+                    a.minY = b.minY;
                 }
 
                 return a;
@@ -99,10 +100,10 @@ public class partialBinningTest {
 
         System.out.println("selectivity = " + selectivity);
 
-        double totalx = myMbr.maxX - myMbr.minX; // find the total area size, edge of square, etc
-        double totaly = myMbr.maxY - myMbr.minY;
-        double totalArea = totalx * totaly;
-        double edge = Math.sqrt(selectivity * totalArea);
+        final double totalx = myMbr.maxX - myMbr.minX; // find the total area size, edge of square, etc
+        final double totaly = myMbr.maxY - myMbr.minY;
+        final double totalArea = totalx * totaly;
+        final double edge = Math.sqrt(selectivity * totalArea);
 
         System.out.println("minLongitude = " + myMbr.minX);
         System.out.println("maxLongitude = " + myMbr.maxX);
@@ -115,30 +116,23 @@ public class partialBinningTest {
 
         //List<Long> binCounter = new ArrayList<Long>();
 
-        int mega = 1000000; // find the split
-        //long numBin = (memoryBudget * mega) / 8;
-        long numBin = 25;
+        final int mega = 1000000; // find the split
+        //final long numBin = (memoryBudget * mega) / 8;
+        final long numBin = 50;
         //long numBin = 100 ;
         double sqroot = Math.sqrt(numBin);
-        int printezis = (int) sqroot; // timh pou 8a ginetai to split
-        double xSplit = (myMbr.maxX - myMbr.minX) / printezis;
-        double ySplit = (myMbr.maxY - myMbr.minY) / printezis;
-        //List<Long> binCounter = new ArrayList<Long>() ;
-        //long zero = 0;
-        //for (long i = 0; i < numBin; i++) {
-        //    binCounter.add(zero);
-        //}
-        int togoBin = 0;
-        long tempcount1 = 0;
+        final int printezis = (int) sqroot; // timh pou 8a ginetai to split
+        final double xSplit = (myMbr.maxX - myMbr.minX) / printezis;
+        final double ySplit = (myMbr.maxY - myMbr.minY) / printezis;
 
-        JavaRDD<Long> histogram = pointData.mapPartitions(new FlatMapFunction<Iterator<mbr>, Long>() {
+        JavaRDD<long[]> histograms = mbrData.mapPartitions(new FlatMapFunction<Iterator<mbr>, long[]>() {
             @Override
-            public Iterable<Long> call(Iterator<mbr> x) throws Exception {
+            public Iterator<long[]> call(Iterator<mbr> x) throws Exception {
                 List<Long> binCounter = new ArrayList<Long>();
                 int togoBin = 0;
                 long tempcount1 = 0;
-                long zero = 0;
-                for (long i = 0; i < numBin; i++) {
+                final long zero = 0;
+                for (long i = 0; i < printezis * printezis; i++) {
                     binCounter.add(zero);
                 }
                 while (x.hasNext()) {
@@ -167,53 +161,35 @@ public class partialBinningTest {
                     tempcount1++;
                     binCounter.set(togoBin, tempcount1);
                 }
-                return binCounter;
+                //for (int i = 0; i < binCounter.size(); i++) {
+                //    System.out.println("-> " + i + " : " + binCounter.get(i));
+                //}
+
+                long[] returnValue = new long[binCounter.size()];
+
+                for (int i = 0; i < returnValue.length; i++) {
+                    returnValue[i] = binCounter.get(i);
+                    System.out.println("-> " + i + " : " + returnValue[i]);
+                }
+
+                return Arrays.asList(returnValue).iterator();
             }
         });
 
-        List<Long> test = histogram.collect();
-        for (int i = 0; i < test.size(); i++) {
-            System.out.println("i = " + i + " - " + test.get(i));
+        long[] histogram = histograms.reduce(new Function2<long[], long[], long[]>() {
+            public long[] call(long[] h1, long[] h2) throws Exception {
+                for (int i = 0; i < h1.length; i++) {
+                    System.out.println("-> " + h1[i] + " + " + h2[i]);
+                    h1[i] = h1[i] + h2[i];
+                }
+                return h1;
+            }
+        });
+
+        for (int i = 0; i < histogram.length; i++) {
+            System.out.println("-> " + i + " : " + histogram[i]);
         }
 
-        /*
-        for (int i = 0; i < printezis; i++) {
-        
-            final int temp = i;
-            JavaRDD<myPoint2> horizLine = pointData.filter(new Function<myPoint2, Boolean>() {
-                public Boolean call(myPoint2 p) throws Exception {
-                    if ((p.latitude >= temp * ySplit) && (p.latitude < (temp + 1) * printezis)) {
-                        //System.out.println("temp = " + temp);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            });
-        
-            List<myPoint2> linePoints = new ArrayList<myPoint2>();
-        
-            linePoints = horizLine.collect();
-        
-            for (myPoint2 x : linePoints) {
-                double tempbin = (x.longitude - minX.longitude) / xSplit;
-                long xbin = (long) tempbin;
-        
-                togoBin = (int) ((i * printezis) + xbin);
-                //System.out.println("---> " + togoBin);
-        
-                //System.out.print("---> " + binCounter.get(togoBin));
-                tempcount1 = binCounter.get(togoBin);
-                tempcount1++;
-                binCounter.set(togoBin, tempcount1);
-            }
-        
-        }
-        
-        for (int i = 0; i < binCounter.size(); i++) {
-            System.out.println("-> " + i + " - " + binCounter.get(i));
-        }
-        
         // final count of points in each bin
         System.out.println("----------");
         int x = 0;
@@ -221,7 +197,7 @@ public class partialBinningTest {
         int tempBinUp = 0;
         int tempBinLeft = 0;
         int tempBinDiag = 0;
-        for (int i = 0; i < binCounter.size(); i++) {
+        for (int i = 0; i < histogram.length; i++) {
             x = i % printezis;
             y = i / printezis;
             //System.out.println(x + " - " + y);
@@ -229,28 +205,29 @@ public class partialBinningTest {
                 // Do nothing
             } else if (x == 0) {
                 tempBinLeft = ((y - 1) * printezis) + x;
-                tempcount1 = binCounter.get(i) + binCounter.get(tempBinLeft);
-                binCounter.set(i, tempcount1);
+                //tempcount1 = histogram.get(i) + histogram.get(tempBinLeft);
+                //histogram.set(i, tempcount1);
+                histogram[i] = histogram[i] + histogram[tempBinLeft];
             } else if (y == 0) {
                 tempBinUp = (y * printezis) + (x - 1);
-                tempcount1 = binCounter.get(i) + binCounter.get(tempBinUp);
-                binCounter.set(i, tempcount1);
+                //tempcount1 = histogram.get(i) + histogram.get(tempBinUp);
+                //histogram.set(i, tempcount1);
+                histogram[i] = histogram[i] + histogram[tempBinUp];
             } else {
                 tempBinUp = (y * printezis) + (x - 1);
                 tempBinLeft = ((y - 1) * printezis) + x;
                 tempBinDiag = ((y - 1) * printezis) + (x - 1);
-                tempcount1 = binCounter.get(i) + binCounter.get(tempBinUp) + binCounter.get(tempBinLeft)
-                        - binCounter.get(tempBinDiag);
-                binCounter.set(i, tempcount1);
-        
+                //tempcount1 = histogram.get(i) + histogram.get(tempBinUp) + histogram.get(tempBinLeft) - histogram.get(tempBinDiag);
+                //binCounter.set(i, tempcount1);
+                histogram[i] = histogram[i] + histogram[tempBinUp] + histogram[tempBinLeft] - histogram[tempBinDiag];
+
             }
             //System.out.println(x + " - " + y + " - " + binCounter.get(i)) ;
         }
-        
-        for (int i = 0; i < binCounter.size(); i++) {
-            System.out.println("-> " + i + " - " + binCounter.get(i));
+
+        for (int i = 0; i < histogram.length; i++) {
+            System.out.println("-> " + i + " : " + histogram[i]);
         }
-        */
 
         long endTime = System.nanoTime();
         long duration = (endTime - startTime); //divide by 1000000 to get milliseconds
