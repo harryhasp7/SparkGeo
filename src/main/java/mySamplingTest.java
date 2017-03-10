@@ -33,21 +33,6 @@ public class mySamplingTest {
 
         JavaRDD<String> inputFile = sc.textFile(fileName); //Spark
 
-        //long count = inputFile.count(); //Spark
-        /*
-        JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
-            public myPoint2 call(String s) {
-                //myPoint2 result = s.trim().toUpperCase();
-        
-                //final String tokenSplit = "\t";
-                final String tokenSplit = ",";
-                String[] parts = s.split(tokenSplit);
-                myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
-        
-                return pt;
-            }
-        });
-        */
         class mbr implements Serializable {
             double maxX;
             double minX;
