@@ -56,9 +56,6 @@ public class mySamplingTest {
                 String[] parts = s.split(tokenSplit);
                 mbr pt = new mbr(Double.parseDouble(parts[1]), Double.parseDouble(parts[1]),
                         Double.parseDouble(parts[2]), Double.parseDouble(parts[2]));
-                if (pt.minY < -175.0) {
-                    System.out.println(pt.minY);
-                }
 
                 return pt;
             }

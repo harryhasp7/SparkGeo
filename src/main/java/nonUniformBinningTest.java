@@ -1,13 +1,16 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 
 public class nonUniformBinningTest {
 
@@ -20,152 +23,136 @@ public class nonUniformBinningTest {
 
     private ArrayList<myPoint2> queryPointsCoordinates = new ArrayList<myPoint2>();
 
-    List<Long> binCounter = new ArrayList<Long>();
-
-    public void binning(JavaSparkContext sc, int memoryBudget, String fileName, int type, double selectivity)
+    public static void binning(JavaSparkContext sc, int memoryBudget, String fileName, int type, double selectivity)
             throws IOException {
 
         long startTime = System.nanoTime();
 
         JavaRDD<String> inputFile = sc.textFile(fileName); //Spark
 
-        //FileReader in = new FileReader("G:\\all_nodes");
-        //FileReader in = new FileReader("G:\\tweets-2014-06-14");
-        FileReader in = new FileReader(fileName);
-        BufferedReader br = new BufferedReader(in);
-        ArrayList<myPoint2> sample = new ArrayList<myPoint2>();
+        // find mins and maxs
+        class mbr implements Serializable {
+            double maxX;
+            double minX;
+            double maxY;
+            double minY;
 
-        String line;
-        long count = 0;
-        double minLongitude = 0.0;
-        double maxLongitude = 0.0;
-        double minLatitude = 0.0;
-        double maxLatitude = 0.0;
-        double testx = 0;
-        double testy = 0;
-        //long countSquare = 0 ;
-
-        int mega = 1000000;
-
-        //int tempSize = (memoryBudget * mega) / 3 ;
-
-        // create sample
-
-        int sampleSize = (memoryBudget * mega) / 16;
-        System.out.println("sampleSize = " + sampleSize);
-
-        while ((line = br.readLine()) != null) {
-            String tokenSplit;
-            if (type == 0) {
-                tokenSplit = "\t";
-                //String[] parts = line.toString().split("\t");
-            } else if (type == 1) {
-                tokenSplit = ",";
-                //String[] parts = line.toString().split(",");
-            } else {
-                System.out.println("--> Wrong type for split in sampling");
-                break;
+            public mbr(double maxX, double minX, double maxY, double minY) {
+                this.maxX = maxX;
+                this.minX = minX;
+                this.maxY = maxY;
+                this.minY = minY;
             }
-            String[] parts = line.toString().split(tokenSplit);
-            double longitude = Double.parseDouble(parts[1]);
-            double latitude = Double.parseDouble(parts[2]);
-            //System.out.println(count + " " + line);
-
-            if (count == 0) { // compute the min and max
-                minLongitude = longitude;
-                maxLongitude = longitude;
-                minLatitude = latitude;
-                maxLatitude = latitude;
-            } else {
-                if (minLongitude > longitude) {
-                    minLongitude = longitude;
-                } else if (maxLongitude < longitude) {
-                    maxLongitude = longitude;
-                }
-                if (minLatitude > latitude) {
-                    minLatitude = latitude;
-                } else if (maxLatitude < latitude) {
-                    maxLatitude = latitude;
-                }
-            }
-
-            myPoint2 osfp = new myPoint2(longitude, latitude); // create new point from dataset
-
-            if (count < sampleSize) { // den exoume gemisei to sample
-                //System.out.println("count = " + count);
-                sample.add(osfp);
-            } else {
-                //int ran = new Random().nextInt(count + 1) ;
-                long ran = ThreadLocalRandom.current().nextLong(count + 1);
-                int intRan = (int) ran;
-
-                if (ran < sampleSize) {
-                    sample.set(intRan, osfp);
-                }
-
-            }
-
-            count++;
-
-            /*
-            if (count == 10) {
-                break ;
-            }
-            */
-            if (count % 100000000 == 0) {
-                System.out.println("Don't worry - " + count);
-            }
-            if (count == pointNum) {
-                System.out.println(count + " - " + longitude + " - " + latitude);
-                testx = longitude;
-                testy = latitude;
-            }
-            for (int i = 0; i < queryPoints.length; i++) {
-                if (count == queryPoints[i]) {
-                    System.out.println(count + " - " + longitude + " - " + latitude);
-                    this.queryPointsCoordinates.add(osfp);
-                    //this.queryPointsCoordinates[i].longitude = longitude ;
-                    //this.queryPointsCoordinates[i].latitude = latitude ;
-                }
-            }
-            /**/
-            //System.out.println(count + " - Telos insert");
-            /*
-            Iterator itr = sample.iterator();
-            while(itr.hasNext()){
-                //System.out.println("malakas");
-                myPoint st=(myPoint)itr.next();
-                System.out.println(st.longitude + "\t" + st.latitude + "\t" + st.ranValue);
-            }
-            */
         }
-        in.close();
-        System.out.println("final count = " + count);
 
-        System.out.println("sample size = " + sample.size());
-        System.out.println("selectivity = " + selectivity);
+        JavaRDD<mbr> mbrData = inputFile.map(new Function<String, mbr>() {
+            public mbr call(String s) {
+                //myPoint2 result = s.trim().toUpperCase();
 
-        //double totalx = maxLongitude - minLongitude ;               // find the total area size, edge of square, etc
-        //double totaly = maxLatitude - minLatitude ;
-        //double totalArea = totalx * totaly ;
-        //double edge =  Math.sqrt(selectivity * totalArea) ;
+                //final String tokenSplit = "\t";
+                final String tokenSplit = ",";
+                String[] parts = s.split(tokenSplit);
+                mbr pt = new mbr(Double.parseDouble(parts[1]), Double.parseDouble(parts[1]),
+                        Double.parseDouble(parts[2]), Double.parseDouble(parts[2]));
 
-        //System.out.println("minLongitude = " + minLongitude);
-        //System.out.println("maxLongitude = " + maxLongitude);
-        //System.out.println("minLatitude = " + minLatitude);
-        //System.out.println("maxLatitude = " + maxLatitude);
-        //System.out.println("totalx = " + totalx);
-        //System.out.println("totaly = " + totaly);
-        //System.out.println("totalArea = " + totalArea);
-        //System.out.println("edge = " + edge);
+                return pt;
+            }
+        });
 
-        // start nonUniformBinning pre-process
+        mbr myMbr = mbrData.reduce(new Function2<mbr, mbr, mbr>() {
+            public mbr call(mbr a, mbr b) {
+                if (a.maxX < b.maxX) {
+                    a.maxX = b.maxX;
+                }
+                if (a.minX > b.minX) {
+                    a.minX = b.minX;
+                }
+                if (a.maxY < b.maxY) {
+                    a.maxY = b.maxY;
+                }
+                if (a.minY > b.minY) {
+                    a.minY = b.minY;
+                }
 
-        long numBin = (memoryBudget * mega) / 8;
+                return a;
+            }
+        });
+
+        System.out.println("--> max X = " + myMbr.maxX);
+        System.out.println("--> min X = " + myMbr.minX);
+        System.out.println("--> max Y = " + myMbr.maxY);
+        System.out.println("--> min Y = " + myMbr.minY);
+
+        //
+        //
+        //
+
+        // --- create sample (on Spark) ---
+
+        long count = inputFile.count(); //Spark
+        System.out.println("--> count = " + count);
+
+        final int mega = 1000000;
+        final int sampleSize = (memoryBudget * mega) / 16;
+        double fraction = (double) sampleSize / count;
+        System.out.println("--> fraction = " + fraction);
+
+        JavaRDD<String> sampleString = inputFile.sample(false, fraction);
+
+        JavaRDD<myPoint2> pointData = sampleString.map(new Function<String, myPoint2>() {
+            //JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
+            public myPoint2 call(String s) {
+                //myPoint2 result = s.trim().toUpperCase();
+
+                //final String tokenSplit = "\t";
+                final String tokenSplit = ",";
+                String[] parts = s.split(tokenSplit);
+                myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+
+                return pt;
+            }
+        });
+
+        // --- Sort the sample on x (on Spark and then take a local list with it) ---
+
+        final JavaRDD<myPoint2> sortedX = pointData.sortBy(new Function<myPoint2, Double>() {
+            public Double call(myPoint2 value) throws Exception {
+                return value.longitude;
+            }
+        }, true, 1);
+
+        List<myPoint2> sortedXsample = sortedX.collect();
+        /*
+        for (int i = 0; i < sortedXsample.size(); i++) {
+            System.out.println("--> " + sortedXsample.get(i).longitude);
+        }
+        */
+
+        // --- Sort sample on y (on Spark and then take a local list with it) ---
+
+        final JavaRDD<myPoint2> sortedY = pointData.sortBy(new Function<myPoint2, Double>() {
+            public Double call(myPoint2 value) throws Exception {
+                return value.latitude;
+            }
+        }, true, 1);
+
+        List<myPoint2> sortedYsample = sortedY.collect();
+        /*
+        for (int i = 0; i < sortedsample.size(); i++) {
+            System.out.println("--> " + sortedsample.get(i).longitude);
+        }
+        */
+
+        //
+
+        // --- Find the borders for the splits (local) ---
+
+        //long numBin = (memoryBudget * mega) / 8;
+        long numBin = 50;
         double sqroot = Math.sqrt(numBin);
         int printezis = (int) sqroot; // number of bins in each side
         System.out.println("printezis = " + printezis);
-        //if (sampleSize % printezis)
+
         int numPointsBin = sampleSize / printezis; // numPointsBin = number of points in each bin
         int restPoint = sampleSize % printezis;
         if (restPoint >= (numPointsBin / 2)) {
@@ -175,113 +162,94 @@ public class nonUniformBinningTest {
         System.out.println("numPointsBin = " + numPointsBin);
         List<Double> xborders = new ArrayList<Double>();
         List<Double> yborders = new ArrayList<Double>();
-        //List<Long> binCounter = new ArrayList<Long>() ;
-        long zero = 0;
-        for (long i = 0; i < numBin; i++) {
-            binCounter.add(zero);
-        }
 
-        int togoBin = 0;
-        long tempcount = 0;
         myPoint2 temp;
-
-        quickSort.quickSort(sample, 0, (sample.size() - 1), 0); // sorting on longitude
-        System.out.println("sample size = " + sample.size());
-
-        xborders.add(minLongitude); // create the xborders
+        xborders.add(myMbr.minX); // create the xborders
         for (int i = 1; i < printezis; i++) {
-            temp = sample.get(i * numPointsBin);
+            temp = sortedXsample.get(i * numPointsBin);
             xborders.add(temp.longitude);
         }
-        xborders.add(maxLongitude);
+        xborders.add(myMbr.maxX);
 
-        quickSort.quickSort(sample, 0, (sample.size() - 1), 1); // sorting on longitude
-        System.out.println("sample size = " + sample.size());
-
-        yborders.add(minLatitude); // create the yborders
+        yborders.add(myMbr.minY); // create the yborders
         for (int i = 1; i < printezis; i++) {
-            temp = sample.get(i * numPointsBin);
+            temp = sortedYsample.get(i * numPointsBin);
             yborders.add(temp.latitude);
         }
-        yborders.add(maxLatitude);
+        yborders.add(myMbr.maxY);
 
-        sample = null;
+        sortedXsample = null;
+        sortedYsample = null;
 
-        in = new FileReader(fileName);
-        br = new BufferedReader(in);
+        // --- Calculate histograms ---
 
-        count = 0;
+        JavaRDD<long[]> histograms = mbrData.mapPartitions(new FlatMapFunction<Iterator<mbr>, long[]>() {
+            @Override
+            public Iterator<long[]> call(Iterator<mbr> j) throws Exception {
+                List<Long> binCounter = new ArrayList<Long>();
+                int togoBin = 0;
+                long tempcount = 0;
+                final long zero = 0;
+                for (long i = 0; i < printezis * printezis; i++) {
+                    binCounter.add(zero);
+                }
+                while (j.hasNext()) {
+                    mbr tempMbr = j.next();
+                    //owerCaseLines.add(line.toLowerCase());
 
-        while ((line = br.readLine()) != null) {
-            String tokenSplit;
-            if (type == 0) {
-                tokenSplit = "\t";
-                //String[] parts = line.toString().split("\t");
-            } else if (type == 1) {
-                tokenSplit = ",";
-                //String[] parts = line.toString().split(",");
-            } else {
-                System.out.println("--> Wrong type for split in sampling");
-                break;
-            }
-            String[] parts = line.toString().split(tokenSplit);
-            double longitude = Double.parseDouble(parts[1]);
-            double latitude = Double.parseDouble(parts[2]);
+                    int x = 0;
+                    x = Collections.binarySearch(xborders, tempMbr.maxX);
+                    if (x < 0) {
+                        x = 0 - x - 1;
+                        x--;
+                    } else if (x == printezis) {
+                        x--;
+                    }
 
-            int x = 0;
-            /*
-            while (xborders.get(x) < longitude) {
-                x++ ;
-            }
-            if (x == printezis) {
-                x-- ;
-            }
-            */
-            x = Collections.binarySearch(xborders, longitude);
-            if (x < 0) {
-                x = 0 - x - 1;
-                x--;
-            } else if (x == printezis) {
-                x--;
-            }
+                    int y = 0;
+                    y = Collections.binarySearch(yborders, tempMbr.maxY);
+                    if (y < 0) {
+                        y = 0 - y - 1;
+                        y--;
+                    } else if (y == printezis) {
+                        y--;
+                    }
 
-            int y = 0;
-            /*
-            while (yborders.get(y) < latitude) {
-                y++ ;
-            }
-            if (y == printezis) {
-                y-- ;
-            }
-            */
-            y = Collections.binarySearch(yborders, latitude);
-            if (y < 0) {
-                y = 0 - y - 1;
-                y--;
-            } else if (y == printezis) {
-                y--;
-            }
+                    //System.out.println("x - " + x + ", xborders.get(x) = " + xborders.get(x));
+                    //System.out.println("y = " + y + ", yborders.get(y) = " + yborders.get(y));
+                    togoBin = (int) ((y * printezis) + x);
+                    tempcount = binCounter.get(togoBin);
+                    tempcount++;
+                    binCounter.set(togoBin, tempcount);
+                }
+                //for (int i = 0; i < binCounter.size(); i++) {
+                //    System.out.println("-> " + i + " : " + binCounter.get(i));
+                //}
 
-            //System.out.println("x - " + x + ", xborders.get(x) = " + xborders.get(x));
-            //System.out.println("y = " + y + ", yborders.get(y) = " + yborders.get(y));
-            togoBin = (int) ((y * printezis) + x);
-            tempcount = binCounter.get(togoBin);
-            tempcount++;
-            binCounter.set(togoBin, tempcount);
+                long[] returnValue = new long[binCounter.size()];
 
-            if (count % 100000000 == 0) { // print gia na 3erw oti trexei (comment)
-                System.out.println("Don't worry - " + count);
-            }
-            if (count == 0) { // print gia na 3erw oti trexei (comment)
-                System.out.println("logitude = " + longitude + ", x = " + x + ", (x-1) = " + xborders.get(x - 1)
-                        + ", (x) = " + xborders.get(x) + ", (x+1) = " + xborders.get(x + 1));
-                System.out.println("latitude = " + latitude + ", y = " + y + ", (y-1) = " + yborders.get(y - 1)
-                        + ", (y) = " + yborders.get(y) + ", (y+1) = " + yborders.get(y + 1));
-            }
+                for (int i = 0; i < returnValue.length; i++) {
+                    returnValue[i] = binCounter.get(i);
+                    //System.out.println("-> " + i + " : " + returnValue[i]);
+                }
 
-            count++;
+                return Arrays.asList(returnValue).iterator();
+            }
+        });
+
+        long[] histogram = histograms.reduce(new Function2<long[], long[], long[]>() {
+            public long[] call(long[] h1, long[] h2) throws Exception {
+                for (int i = 0; i < h1.length; i++) {
+                    //System.out.println("-> " + h1[i] + " + " + h2[i]);
+                    h1[i] = h1[i] + h2[i];
+                }
+                return h1;
+            }
+        });
+
+        for (int i = 0; i < histogram.length; i++) {
+            System.out.println("-> " + i + " : " + histogram[i]);
         }
-        System.out.println("sto 0,0 = " + binCounter.get(0));
 
         // final count of points in each bin
         System.out.println("----------");
@@ -290,7 +258,7 @@ public class nonUniformBinningTest {
         int tempBinUp = 0;
         int tempBinLeft = 0;
         int tempBinDiag = 0;
-        for (int i = 0; i < binCounter.size(); i++) {
+        for (int i = 0; i < histogram.length; i++) {
             x = i % printezis;
             y = i / printezis;
             //System.out.println(x + " - " + y);
@@ -298,23 +266,37 @@ public class nonUniformBinningTest {
                 // Do nothing
             } else if (x == 0) {
                 tempBinLeft = ((y - 1) * printezis) + x;
-                tempcount = binCounter.get(i) + binCounter.get(tempBinLeft);
-                binCounter.set(i, tempcount);
+                //tempcount1 = histogram.get(i) + histogram.get(tempBinLeft);
+                //histogram.set(i, tempcount1);
+                histogram[i] = histogram[i] + histogram[tempBinLeft];
             } else if (y == 0) {
                 tempBinUp = (y * printezis) + (x - 1);
-                tempcount = binCounter.get(i) + binCounter.get(tempBinUp);
-                binCounter.set(i, tempcount);
+                //tempcount1 = histogram.get(i) + histogram.get(tempBinUp);
+                //histogram.set(i, tempcount1);
+                histogram[i] = histogram[i] + histogram[tempBinUp];
             } else {
                 tempBinUp = (y * printezis) + (x - 1);
                 tempBinLeft = ((y - 1) * printezis) + x;
                 tempBinDiag = ((y - 1) * printezis) + (x - 1);
-                tempcount = binCounter.get(i) + binCounter.get(tempBinUp) + binCounter.get(tempBinLeft)
-                        - binCounter.get(tempBinDiag);
-                binCounter.set(i, tempcount);
+                //tempcount1 = histogram.get(i) + histogram.get(tempBinUp) + histogram.get(tempBinLeft) - histogram.get(tempBinDiag);
+                //binCounter.set(i, tempcount1);
+                histogram[i] = histogram[i] + histogram[tempBinUp] + histogram[tempBinLeft] - histogram[tempBinDiag];
 
             }
             //System.out.println(x + " - " + y + " - " + binCounter.get(i)) ;
         }
+
+        for (int i = 0; i < histogram.length; i++) {
+            System.out.println("-> " + i + " : " + histogram[i]);
+        }
+
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime); //divide by 1000000 to get milliseconds
+        System.out.println("-----> Data preprocess time : " + (duration / 1000000000));
+
+        //
+        //
+        //
 
         /*
         for (int i = 0; i < queryPoints.length; i++) {

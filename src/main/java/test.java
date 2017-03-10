@@ -53,7 +53,7 @@ public class test {
         // B I N N I N G
 
         //String filePath = new String("F:\\all_nodes") ;
-        //int type = 0 ;
+        //int type = 0;
         //String filePath = new String("E:\\tweets-2014-06-14") ;
         int type = 1;
         //myBinning bin = new myBinning();
@@ -61,7 +61,8 @@ public class test {
         //nonUniformBinning bin = new nonUniformBinning() ;
         //bin.binning(memoryBudget, filePath, type);
         //bin.binning(memoryBudget, filePath, type, realSelectivity, pointNum);
-        partialBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
+        //partialBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
+        nonUniformBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
         /**/
 
         long endTime = System.nanoTime();

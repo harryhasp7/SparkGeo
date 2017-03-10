@@ -51,9 +51,6 @@ public class partialBinningTest {
                 String[] parts = s.split(tokenSplit);
                 mbr pt = new mbr(Double.parseDouble(parts[1]), Double.parseDouble(parts[1]),
                         Double.parseDouble(parts[2]), Double.parseDouble(parts[2]));
-                if (pt.minY < -175.0) {
-                    System.out.println(pt.minY);
-                }
 
                 return pt;
             }
@@ -110,7 +107,7 @@ public class partialBinningTest {
             public Iterator<long[]> call(Iterator<mbr> x) throws Exception {
                 List<Long> binCounter = new ArrayList<Long>();
                 int togoBin = 0;
-                long tempcount1 = 0;
+                long tempcount = 0;
                 final long zero = 0;
                 for (long i = 0; i < printezis * printezis; i++) {
                     binCounter.add(zero);
@@ -137,9 +134,9 @@ public class partialBinningTest {
                     //System.out.println("---> " + togoBin);
 
                     //System.out.print("---> " + binCounter.get(togoBin));
-                    tempcount1 = binCounter.get(togoBin);
-                    tempcount1++;
-                    binCounter.set(togoBin, tempcount1);
+                    tempcount = binCounter.get(togoBin);
+                    tempcount++;
+                    binCounter.set(togoBin, tempcount);
                 }
                 //for (int i = 0; i < binCounter.size(); i++) {
                 //    System.out.println("-> " + i + " : " + binCounter.get(i));
@@ -149,7 +146,7 @@ public class partialBinningTest {
 
                 for (int i = 0; i < returnValue.length; i++) {
                     returnValue[i] = binCounter.get(i);
-                    System.out.println("-> " + i + " : " + returnValue[i]);
+                    //System.out.println("-> " + i + " : " + returnValue[i]);
                 }
 
                 return Arrays.asList(returnValue).iterator();
@@ -159,7 +156,7 @@ public class partialBinningTest {
         long[] histogram = histograms.reduce(new Function2<long[], long[], long[]>() {
             public long[] call(long[] h1, long[] h2) throws Exception {
                 for (int i = 0; i < h1.length; i++) {
-                    System.out.println("-> " + h1[i] + " + " + h2[i]);
+                    //System.out.println("-> " + h1[i] + " + " + h2[i]);
                     h1[i] = h1[i] + h2[i];
                 }
                 return h1;
