@@ -12,7 +12,8 @@ public class test {
         //String logFile = "/home/harry/spark/README.md"; // Should be some file on your system
         //String logFile = "/media/harry/MyPassport/blabla"; // Should be some file on your system
         //String logFile = "/media/harry/MyPassport/all_nodes"; // Should be some file on your system
-        String logFile = "/media/harry/MyPassport/tweets-2014-06-14"; // Should be some file on your system
+        //String logFile = "/media/harry/MyPassport/tweets-2014-06-14"; // Should be some file on your system
+        String logFile = args[0];
 
         SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("spark://harry-Lab:7077");
         //SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("local"); //chan
