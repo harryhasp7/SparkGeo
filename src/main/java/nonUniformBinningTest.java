@@ -30,7 +30,10 @@ public class nonUniformBinningTest {
 
         JavaRDD<String> inputFile = sc.textFile(fileName); //Spark
 
+        //
         // find mins and maxs
+        //
+
         class mbr implements Serializable {
             double maxX;
             double minX;
@@ -87,7 +90,9 @@ public class nonUniformBinningTest {
         //
         //
 
+        //
         // --- create sample (on Spark) ---
+        //
 
         long count = inputFile.count(); //Spark
         System.out.println("--> count = " + count);
@@ -113,39 +118,37 @@ public class nonUniformBinningTest {
             }
         });
 
-        // --- Sort the sample on x (on Spark and then take a local list with it) ---
-
+        //
+        // --- Sort the sample on x (Spark) ---
+        //
+        /*
         final JavaRDD<myPoint2> sortedX = pointData.sortBy(new Function<myPoint2, Double>() {
             public Double call(myPoint2 value) throws Exception {
                 return value.longitude;
             }
         }, true, 1);
-
         List<myPoint2> sortedXsample = sortedX.collect();
-        /*
-        for (int i = 0; i < sortedXsample.size(); i++) {
+        for (int i = 0; i < sortedXsample.size(); i++)
             System.out.println("--> " + sortedXsample.get(i).longitude);
-        }
         */
 
-        // --- Sort sample on y (on Spark and then take a local list with it) ---
-
+        //
+        // --- Sort sample on y (Spark) ---
+        //
+        /*
         final JavaRDD<myPoint2> sortedY = pointData.sortBy(new Function<myPoint2, Double>() {
             public Double call(myPoint2 value) throws Exception {
                 return value.latitude;
             }
         }, true, 1);
-
         List<myPoint2> sortedYsample = sortedY.collect();
-        /*
-        for (int i = 0; i < sortedsample.size(); i++) {
-            System.out.println("--> " + sortedsample.get(i).longitude);
-        }
+        //for (int i = 0; i < sortedsample.size(); i++)
+        //    System.out.println("--> " + sortedsample.get(i).longitude);
         */
 
         //
-
         // --- Find the borders for the splits (local) ---
+        //
 
         //long numBin = (memoryBudget * mega) / 8;
         long numBin = 50;
@@ -160,28 +163,38 @@ public class nonUniformBinningTest {
             System.out.println("Increase the numPointsBin");
         }
         System.out.println("numPointsBin = " + numPointsBin);
+
         List<Double> xborders = new ArrayList<Double>();
         List<Double> yborders = new ArrayList<Double>();
-
         myPoint2 temp;
+
+        List<myPoint2> sample = pointData.collect();
+        ArrayList<myPoint2> sortedSample = new ArrayList<myPoint2>(sample);
+        sample = null;
+
+        quickSort.quickSort(sortedSample, 0, (sortedSample.size() - 1), 0); // sorting on longitude
+        System.out.println("sample size = " + sortedSample.size());
         xborders.add(myMbr.minX); // create the xborders
         for (int i = 1; i < printezis; i++) {
-            temp = sortedXsample.get(i * numPointsBin);
+            temp = sortedSample.get(i * numPointsBin);
             xborders.add(temp.longitude);
         }
         xborders.add(myMbr.maxX);
 
+        quickSort.quickSort(sortedSample, 0, (sortedSample.size() - 1), 1); // sorting on latitude
+        System.out.println("sample size = " + sortedSample.size());
         yborders.add(myMbr.minY); // create the yborders
         for (int i = 1; i < printezis; i++) {
-            temp = sortedYsample.get(i * numPointsBin);
+            temp = sortedSample.get(i * numPointsBin);
             yborders.add(temp.latitude);
         }
         yborders.add(myMbr.maxY);
 
-        sortedXsample = null;
-        sortedYsample = null;
+        sortedSample = null;
 
+        //
         // --- Calculate histograms ---
+        //
 
         JavaRDD<long[]> histograms = mbrData.mapPartitions(new FlatMapFunction<Iterator<mbr>, long[]>() {
             @Override
@@ -251,7 +264,10 @@ public class nonUniformBinningTest {
             System.out.println("-> " + i + " : " + histogram[i]);
         }
 
+        //
         // final count of points in each bin
+        //
+
         System.out.println("----------");
         int x = 0;
         int y = 0;
