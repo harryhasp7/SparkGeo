@@ -15,19 +15,10 @@ public class mySamplingTest {
     // tweets points
     //long[] queryPoints = {3971781, 10081489, 8430327, 6530062, 2894280} ;
 
-    //private myPoint2[] queryPointsCoordinates ;
-    //private ArrayList<myPoint2> queryPointsCoordinates = new ArrayList<myPoint2>();
-
-    //private double[] splits;
-
-    //private ArrayList<myLeaf> leafNodes = new ArrayList<myLeaf>();
-
-    //private int capacity = 10;
-
     public static void sampleSpark(JavaSparkContext sc, int memoryBudget, String fileName, int type, double selectivity)
             throws IOException {
 
-        //long startTime = System.nanoTime();
+        long startTime = System.nanoTime();
 
         JavaRDD<String> inputFile = sc.textFile(fileName); //Spark
 
@@ -48,8 +39,7 @@ public class mySamplingTest {
                 this.maxY = maxY;
                 this.minY = minY;
             }
-        }
-        
+        }        
         JavaRDD<mbr> mbrData = inputFile.map(new Function<String, mbr>() {
             public mbr call(String s) {
                 //myPoint2 result = s.trim().toUpperCase();
@@ -62,8 +52,7 @@ public class mySamplingTest {
         
                 return pt;
             }
-        });
-        
+        });        
         mbr myMbr = mbrData.reduce(new Function2<mbr, mbr, mbr>() {
             public mbr call(mbr a, mbr b) {
                 if (a.maxX < b.maxX) {
@@ -82,27 +71,26 @@ public class mySamplingTest {
                 return a;
             }
         });
-        
         System.out.println("--> max X = " + myMbr.maxX);
         System.out.println("--> min X = " + myMbr.minX);
         System.out.println("--> max Y = " + myMbr.maxY);
         System.out.println("--> min Y = " + myMbr.minY);
         */
 
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
 
-        //long count = inputFile.count(); //Spark
-        //System.out.println("--> count = " + count);
+        long count = inputFile.count(); //Spark
+        System.out.println("--> count = " + count);
 
         final int mega = 1000000;
         final int sampleSize = (memoryBudget * mega) / 16;
-        //double fraction = (double) sampleSize / count;
-        //System.out.println("--> fraction = " + fraction);
+        double fraction = (double) sampleSize / count;
+        System.out.println("--> fraction = " + fraction);
 
-        //JavaRDD<String> sampleString = inputFile.sample(false, fraction);
+        JavaRDD<String> sampleString = inputFile.sample(false, fraction);
 
-        //JavaRDD<myPoint2> pointData = sampleString.map(new Function<String, myPoint2>() {
-        JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
+        JavaRDD<myPoint2> pointData = sampleString.map(new Function<String, myPoint2>() {
+            //JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
             public myPoint2 call(String s) {
                 //final String tokenSplit = "\t";
                 final String tokenSplit = ",";
@@ -113,8 +101,8 @@ public class mySamplingTest {
             }
         });
 
-        //List<myPoint2> sample = pointData.collect();
-        List<myPoint2> sample = pointData.takeSample(false, (int) sampleSize); //Spark
+        List<myPoint2> sample = pointData.collect();
+        //List<myPoint2> sample = pointData.takeSample(false, (int) sampleSize); //Spark
 
         System.out.println("--> Took the sample = " + sample.size() + " - " + sampleSize);
 

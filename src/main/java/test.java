@@ -14,7 +14,7 @@ public class test {
         //String logFile = "/media/harry/MyPassport/all_nodes"; // Should be some file on your system
         String logFile = "/media/harry/MyPassport/tweets-2014-06-14"; // Should be some file on your system
 
-        SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("local");
+        SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("spark://harry-Lab:7077");
         //SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("local"); //chan
 
         //JavaSparkContext sc = new JavaSparkContext("local[8]", "Simple Application");
