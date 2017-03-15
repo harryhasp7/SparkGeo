@@ -260,9 +260,9 @@ public class nonUniformBinningTest {
             }
         });
 
-        for (int i = 0; i < histogram.length; i++) {
-            System.out.println("-> " + i + " : " + histogram[i]);
-        }
+        //for (int i = 0; i < histogram.length; i++) {
+        //    System.out.println("-> " + i + " : " + histogram[i]);
+        //}
 
         //
         // final count of points in each bin
@@ -302,13 +302,14 @@ public class nonUniformBinningTest {
             //System.out.println(x + " - " + y + " - " + binCounter.get(i)) ;
         }
 
-        for (int i = 0; i < histogram.length; i++) {
-            System.out.println("-> " + i + " : " + histogram[i]);
-        }
+        //for (int i = 0; i < histogram.length; i++) {
+        //    System.out.println("-> " + i + " : " + histogram[i]);
+        //}
 
         long endTime = System.nanoTime();
         long duration = (endTime - startTime); //divide by 1000000 to get milliseconds
-        System.out.println("-----> Data preprocess time : " + (duration / 1000000000));
+        System.out.println("-----> Data process time nonUniform: " + (duration / 1000000000) + " - For memory budget : "
+                + memoryBudget); // print result in seconds
 
         //
         //

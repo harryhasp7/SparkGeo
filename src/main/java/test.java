@@ -13,21 +13,24 @@ public class test {
         //String logFile = "/media/harry/MyPassport/blabla"; // Should be some file on your system
         //String logFile = "/media/harry/MyPassport/all_nodes"; // Should be some file on your system
         //String logFile = "/media/harry/MyPassport/tweets-2014-06-14"; // Should be some file on your system
-        String logFile = args[0];
+
+        int method = Integer.parseInt(args[0]);
+        System.out.println(method);
+        int memoryBudget = Integer.parseInt(args[1]);
+        System.out.println(memoryBudget);
+        String logFile = args[2];
+        System.out.println(logFile);
 
         SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("spark://harry-Lab:7077");
         //SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("local"); //chan
 
         //JavaSparkContext sc = new JavaSparkContext("local[8]", "Simple Application");
-        JavaSparkContext sc = new JavaSparkContext(conf);
+        JavaSparkContext sc = new JavaSparkContext(conf); // use this
 
         long startTime = System.nanoTime();
 
         double selectivity = 0.0001;
-        int memoryBudget = 10;
-        //long pointNum = 539289201 ;
-        //long pointNum = 2102587674;
-        //long pointNum = 177338570 ;
+        //int memoryBudget = 10;
 
         /**/
         double realSelectivity = selectivity / 100;
@@ -39,16 +42,41 @@ public class test {
         int size2 = Long.SIZE / Byte.SIZE;
         System.out.println(size2);
 
-        /**/
-        // S A M P L I N G
+        if (method == 1) {
 
+            int type = 1;
+            System.out.println(
+                    "Let's go for: method = Sampling - memoryBudget = " + memoryBudget + " - file = " + logFile);
+            mySamplingTest.sampleSpark(sc, memoryBudget, logFile, type, realSelectivity);
+
+        } else if (method == 2) {
+
+            int type = 1;
+            System.out.println(
+                    "Let's go for: method = Sampling - memoryBudget = " + memoryBudget + " - file = " + logFile);
+            partialBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
+
+        } else if (method == 3) {
+
+            int type = 1;
+            System.out.println(
+                    "Let's go for: method = Sampling - memoryBudget = " + memoryBudget + " - file = " + logFile);
+            nonUniformBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
+
+        } else {
+            System.out.println("--------------> What?");
+        }
+
+        /*
+        // S A M P L I N G
+        
         //String filePath = new String("F:\\all_nodes");
         //int type = 0;
         //String filePath = new String("F:\\tweets-2014-06-14");
         int type = 1;
         mySamplingTest.sampleSpark(sc, memoryBudget, logFile, type, realSelectivity);
         //sampling(memoryBudget, logFile, type, realSelectivity, pointNum);
-        /**/
+        */
 
         /*
         // B I N N I N G

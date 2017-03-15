@@ -163,9 +163,9 @@ public class partialBinningTest {
             }
         });
 
-        for (int i = 0; i < histogram.length; i++) {
-            System.out.println("-> " + i + " : " + histogram[i]);
-        }
+        //for (int i = 0; i < histogram.length; i++) {
+        //    System.out.println("-> " + i + " : " + histogram[i]);
+        //}
 
         // final count of points in each bin
         System.out.println("----------");
@@ -202,13 +202,14 @@ public class partialBinningTest {
             //System.out.println(x + " - " + y + " - " + binCounter.get(i)) ;
         }
 
-        for (int i = 0; i < histogram.length; i++) {
-            System.out.println("-> " + i + " : " + histogram[i]);
-        }
+        //for (int i = 0; i < histogram.length; i++) {
+        //    System.out.println("-> " + i + " : " + histogram[i]);
+        //}
 
         long endTime = System.nanoTime();
         long duration = (endTime - startTime); //divide by 1000000 to get milliseconds
-        System.out.println("-----> Data preprocess time : " + (duration / 1000000000));
+        System.out.println("-----> Data process time partialBinning: " + (duration / 1000000000)
+                + " - For memory budget : " + memoryBudget); // print result in seconds
 
         /*
         for (int i = 0; i < queryPoints.length; i++) {
