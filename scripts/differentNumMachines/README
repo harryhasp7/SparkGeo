@@ -1,0 +1,13 @@
+The script called "difMachines.sh" executes the included jar file on Spark
+
+1. Download and iclude the file "all_nodes" from Spatial Hadoop datasets in the same directory with this script
+
+2. THe script needs as argument a number which is the number of the machines that will be set for that run. The purpose of this argument is to create a unique file for every different run of different number of machines
+
+3. Execute the script as: ./difMachines.sh <number_of_machines>
+
+4. The script will run for all the methods and for 10mb and 500mb memory budgets for the file "all_nodes" with one execution
+
+5. It needs to be executed multiple times with different number of machines
+
+6. The script will generate in each run a file called "<num_of_machines>MachinesOutput" which will include all the results of the execution

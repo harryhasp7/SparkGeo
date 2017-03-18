@@ -1,0 +1,17 @@
+The script called "createFIlesScript.sh" in this file creates smaller files from another one
+
+1. The file from the one that the script will create the smaller files, is the "all_nodes" from Spatial Hadoop datasets
+
+2. Save the file "all_nodes" in the same directory with this script
+
+3. Run the script
+
+4. The script prints the name of the files that it generates
+
+5. The script will generate 4 files in the same directory with all the previous by names:
+	a. 020all_nodes
+	b. 040all_nodes
+	c. 060all_nodes
+	d. 080all_nodes
+
+6. The numbers in front of the files represent the persentage of the original one
