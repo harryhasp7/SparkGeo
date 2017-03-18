@@ -101,8 +101,8 @@ public class mySamplingTest {
         JavaRDD<myPoint2> pointData = sampleString.map(new Function<String, myPoint2>() {
             //JavaRDD<myPoint2> pointData = inputFile.map(new Function<String, myPoint2>() {
             public myPoint2 call(String s) {
-                //final String tokenSplit = "\t";
-                final String tokenSplit = ",";
+                final String tokenSplit = "\t";
+                //final String tokenSplit = ",";
                 String[] parts = s.split(tokenSplit);
                 myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
 

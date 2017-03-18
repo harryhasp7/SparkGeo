@@ -52,8 +52,8 @@ public class nonUniformBinningTest {
             public mbr call(String s) {
                 //myPoint2 result = s.trim().toUpperCase();
 
-                //final String tokenSplit = "\t";
-                final String tokenSplit = ",";
+                final String tokenSplit = "\t";
+                //final String tokenSplit = ",";
                 String[] parts = s.split(tokenSplit);
                 mbr pt = new mbr(Double.parseDouble(parts[1]), Double.parseDouble(parts[1]),
                         Double.parseDouble(parts[2]), Double.parseDouble(parts[2]));
@@ -109,8 +109,8 @@ public class nonUniformBinningTest {
             public myPoint2 call(String s) {
                 //myPoint2 result = s.trim().toUpperCase();
 
-                //final String tokenSplit = "\t";
-                final String tokenSplit = ",";
+                final String tokenSplit = "\t";
+                //final String tokenSplit = ",";
                 String[] parts = s.split(tokenSplit);
                 myPoint2 pt = new myPoint2(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
 
