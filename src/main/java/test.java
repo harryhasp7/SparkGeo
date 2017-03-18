@@ -21,7 +21,9 @@ public class test {
         String logFile = args[2];
         System.out.println(logFile);
 
-        SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("spark://harry-Lab:7077");
+        // SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("spark://harry-Lab:7077");
+        SparkConf conf = new SparkConf().setAppName("Simple Application");
+
         //SparkConf conf = new SparkConf().setAppName("Simple Application").setMaster("local"); //chan
 
         //JavaSparkContext sc = new JavaSparkContext("local[8]", "Simple Application");
@@ -53,14 +55,14 @@ public class test {
 
             int type = 1;
             System.out.println(
-                    "Let's go for: method = Sampling - memoryBudget = " + memoryBudget + " - file = " + logFile);
+                    "Let's go for: method = Partial Binning - memoryBudget = " + memoryBudget + " - file = " + logFile);
             partialBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
 
         } else if (method == 3) {
 
             int type = 1;
-            System.out.println(
-                    "Let's go for: method = Sampling - memoryBudget = " + memoryBudget + " - file = " + logFile);
+            System.out.println("Let's go for: method = NonUniform Binning - memoryBudget = " + memoryBudget
+                    + " - file = " + logFile);
             nonUniformBinningTest.binning(sc, memoryBudget, logFile, type, realSelectivity);
 
         } else {
