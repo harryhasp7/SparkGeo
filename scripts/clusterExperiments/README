@@ -1,0 +1,9 @@
+The script called "clusterExpScript.sh" executes the included jar file on Spark
+
+1. Download and iclude the file "all_nodes" from Spatial Hadoop datasets in the same directory with this script
+
+2. Execute the script
+
+3. The script will run for all the methods and for all the wanted memory budgets for the file "all_nodes" with one execution
+
+3. The script will generate a file called "myBIGoutput" which will include all the results of the execution
