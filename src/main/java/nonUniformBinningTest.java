@@ -150,8 +150,8 @@ public class nonUniformBinningTest {
         // --- Find the borders for the splits (local) ---
         //
 
-        //long numBin = (memoryBudget * mega) / 8;
-        long numBin = 50;
+        long numBin = (memoryBudget * mega) / 8;
+        //long numBin = 50;
         double sqroot = Math.sqrt(numBin);
         int printezis = (int) sqroot; // number of bins in each side
         System.out.println("printezis = " + printezis);

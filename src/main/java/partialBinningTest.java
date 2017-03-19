@@ -94,8 +94,8 @@ public class partialBinningTest {
         //List<Long> binCounter = new ArrayList<Long>();
 
         final int mega = 1000000; // find the split
-        //final long numBin = (memoryBudget * mega) / 8;
-        final long numBin = 50;
+        final long numBin = (memoryBudget * mega) / 8;
+        //final long numBin = 50;
         //long numBin = 100 ;
         double sqroot = Math.sqrt(numBin);
         final int printezis = (int) sqroot; // timh pou 8a ginetai to split
